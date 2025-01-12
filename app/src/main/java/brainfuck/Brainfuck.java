@@ -39,7 +39,11 @@ public class Brainfuck implements Callable<Result> {
     @Override
     public Result call() throws Exception {
         if (file != null) {
-
+            if (file.exists()) {
+                new BrainfuckCommandline().run(file);
+            } else {
+                System.out.println("Error: file "+file.getName()+" does not exist.");
+            }
         } else {
             if (command == null) {
                 new BrainfuckCommandline().run();

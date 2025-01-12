@@ -1,5 +1,6 @@
 package brainfuck;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Scanner;
@@ -27,7 +28,21 @@ public class BrainfuckCommandline {
         System.out.println("bye");
     }
 
-    private void executeCommand(String command) {
+    public void run(File file) {
+        String content = "";
+        try (Scanner scanner = new Scanner(file)) {
+            scanner.useDelimiter("\\A");
+            if (scanner.hasNext()) {
+                content = scanner.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        this.run(content);
+    }
+
+    public void executeCommand(String command) {
         System.out.println(command);
     }
 
