@@ -7,3 +7,55 @@ Brainf*ck is an esoteric programming language that was created by Urban Müller 
 
 Official website: https://brainfuck.org/
 
+# build
+
+- use gradle
+- build
+
+```bash
+./gradlew installDist
+```
+
+# run
+
+run the application with parameter --help to see the arguments
+
+```bash
+./run.sh
+Usage: brainfuck [-hvV] [-vv] [-c[=<command>]] [<file>]
+This challenge is to build your own brainfuck implementation
+      [<file>]      parameter file to execute
+  -c=[<command>]    executes the command passed
+  -h, --help        Show this help message and exit.
+  -v                verbose model level 1
+  -V, --version     Print version information and exit.
+      -vv           verbose model level 2
+
+```
+
+## run command line
+
+just pass no arguments
+
+```bash
+./run.sh
+brainfuck>> test
+test
+brainfuck>> 
+bye
+
+```
+
+to close: just press <enter>
+
+## execute a command from a file
+
+```bash
+./run.sh hello.bf
+```
+
+## run with inline command
+
+```bash
+./run.sh -c "++++++++++[>+>+++>+++++++>++++++++++<<<<-]>>>++.>+++++.<<<."
+```
