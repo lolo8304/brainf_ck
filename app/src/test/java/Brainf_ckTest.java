@@ -144,13 +144,13 @@ class Brainf_ckTest {
         var bytecode = context.compile();
 
         // Assert
-        Assertions.assertEquals(30, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_PREV, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(6, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_PREV, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
     }
 
     @Test void compile_iterate_loop1_ok() throws IOException {
@@ -161,13 +161,13 @@ class Brainf_ckTest {
         var bytecode = context.compile();
 
         // Assert
-        Assertions.assertEquals(20, bytecode.length());
+        Assertions.assertEquals(12, bytecode.length());
         Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
         Assertions.assertEquals(5, bytecode.nextInt());
         Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
         Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
     }
     @Test void compile_iterate_longer_ok() throws IOException {
         // Arrange
@@ -177,20 +177,20 @@ class Brainf_ckTest {
         var bytecode = context.compile();
 
         // Assert
-        Assertions.assertEquals(40, bytecode.length());
+        Assertions.assertEquals(24, bytecode.length());
         var b=0;
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
         Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
-        Assertions.assertEquals(20, bytecode.nextInt());
+        Assertions.assertEquals(16, bytecode.nextInt());
         Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
         Assertions.assertEquals(5, bytecode.nextInt());
         Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
         Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next()); bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
         Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
-        Assertions.assertEquals(20, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next()); bytecode.nextInt();
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next()); bytecode.nextInt();
+        Assertions.assertEquals(16, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
     }
 
     @Test void interpret_hello_ok() throws IOException {
@@ -202,7 +202,7 @@ class Brainf_ckTest {
         context.interpretUsingVM();
 
         // Assert
-        Assertions.assertEquals(90, bytecode.length());
+        Assertions.assertEquals(68, bytecode.length());
 
 
     }

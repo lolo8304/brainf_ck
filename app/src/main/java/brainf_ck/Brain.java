@@ -12,11 +12,15 @@ public class Brain {
     public static final byte BYTECODE_PREV = 0x02;
     public static final byte BYTECODE_INC = 0x03;
     public static final byte BYTECODE_DEC = 0x04;
+    public static final byte BYTECODE_NEXT_MULTI = 0x11;
+    public static final byte BYTECODE_PREV_MULTI = 0x12;
+    public static final byte BYTECODE_INC_MULTI = 0x13;
+    public static final byte BYTECODE_DEC_MULTI = 0x14;
     public static final byte BYTECODE_PRINT = 0x0A;
     public static final byte BYTECODE_READ_FROM_INPUT = 0x0B;
     public static final byte BYTECODE_DEBUGGER = 0xC;
-    public static final byte BYTECODE_START_LOOP = 0x05;
-    public static final byte BYTECODE_END_LOOP = 0x06;
+    public static final byte BYTECODE_START_LOOP = 0x0D;
+    public static final byte BYTECODE_END_LOOP = 0x0E;
     private final int memorySize;
     private final byte[] memory;
     private final String program;
@@ -154,26 +158,41 @@ public class Brain {
         if (this.bytecode.length() == 0) throw new IOException("Program not compiled");
         this.logStart();
         this.initExecution();
-        var maxByteCode = bytecode.length();
         while (bytecode.hasNext()) {
             var b = this.bytecode.next(); this.statCountOps++;
             switch (b) {
                 case BYTECODE_NEXT: // >
+                    this.pointer++;
+                    if (this.pointer == this.memorySize) this.pointer = 0;
+                    break;
+                case BYTECODE_NEXT_MULTI: // >
                     var countNext = this.bytecode.nextInt();
                     this.pointer += countNext;
                     if (this.pointer >= this.memorySize) this.pointer = this.pointer - this.memorySize;
                     break;
                 case BYTECODE_PREV: // <
+                    this.pointer--;
+                    if (this.pointer == -1) this.pointer = this.memorySize - 1;
+                    break;
+                case BYTECODE_PREV_MULTI: // <
                     var countPrev = this.bytecode.nextInt();
                     this.pointer -= countPrev;
                     if (this.pointer < 0) this.pointer = this.memorySize + this.pointer;
                     break;
                 case BYTECODE_INC: // +
+                    this.memory[this.pointer]++;
+                    this.statCountMemoryWrite++;
+                    break;
+                case BYTECODE_INC_MULTI: // +
                     var countInc = this.bytecode.nextInt();
                     this.memory[this.pointer] += countInc;
                     this.statCountMemoryWrite++;
                     break;
                 case BYTECODE_DEC: // -
+                    this.memory[this.pointer]--;
+                    this.statCountMemoryWrite++;
+                    break;
+                case BYTECODE_DEC_MULTI: // -
                     var countDec = this.bytecode.nextInt();
                     this.memory[this.pointer] -= countDec;
                     this.statCountMemoryWrite++;
@@ -332,55 +351,71 @@ public class Brain {
 
     public static class ByteCode {
         private int pc;
-        private boolean lastWasInc;
-        private boolean lastWasDec;
-        private boolean lastWasNext;
-        private boolean lastWasPrev;
+        private int lastWasInc;
+        private int lastWasDec;
+        private int lastWasNext;
+        private int lastWasPrev;
         private byte[] byteCode;
         private final Stack<Integer> bracketsBytePos = new Stack<Integer>();
 
         public ByteCode(Integer size) {
             this.byteCode = new byte[size * 5];
             this.pc = 0;
-            this.lastWasInc = false;
-            this.lastWasDec = false;
-            this.lastWasNext = false;
-            this.lastWasPrev = false;
+            this.lastWasInc = 0;
+            this.lastWasDec = 0;
+            this.lastWasNext = 0;
+            this.lastWasPrev = 0;
         }
         public void writeInc() {
-            if (this.lastWasInc) {
-                this.writeInt(this.pc - 4, this.readInt(this.pc - 4) + 1);
+            if (this.lastWasInc == 1) {
+                this.write(this.pc - 1, BYTECODE_INC_MULTI);
+                this.pushInt(2);
+                this.lastWasInc++;
+            } else if (this.lastWasInc > 1) {
+                var oldValue = this.readInt(this.pc - 4);
+                this.writeInt(this.pc - 4, oldValue + 1);
             } else {
-                this.lastWasInc = true; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+                this.lastWasInc = 1; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
                 push(BYTECODE_INC);
-                pushInt(1);
             }
         }
         public void writeDec() {
-            if (this.lastWasDec) {
-                this.writeInt(this.pc - 4, this.readInt(this.pc - 4) + 1);
+            if (this.lastWasDec == 1) {
+                this.write(this.pc - 1, BYTECODE_DEC_MULTI);
+                this.pushInt(2);
+                this.lastWasDec++;
+            } else if (this.lastWasDec > 1) {
+                var oldValue = this.readInt(this.pc - 4);
+                this.writeInt(this.pc - 4, oldValue + 1);
             } else {
-                this.lastWasInc = false; this.lastWasDec = true; this.lastWasNext = false; this.lastWasPrev = false;
+                this.lastWasInc = 0; this.lastWasDec = 1; this.lastWasNext = 0; this.lastWasPrev = 0;
                 push(BYTECODE_DEC);
-                pushInt(1);
             }
         }
         public void writeNext() {
-            if (this.lastWasNext) {
-                this.writeInt(this.pc - 4, this.readInt(this.pc - 4) + 1);
+            if (this.lastWasNext == 1) {
+                this.write(this.pc - 1, BYTECODE_NEXT_MULTI);
+                this.pushInt(2);
+                this.lastWasNext++;
+            } else if (this.lastWasNext > 1) {
+                var oldValue = this.readInt(this.pc - 4);
+                this.writeInt(this.pc - 4, oldValue + 1);
             } else {
-                this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = true; this.lastWasPrev = false;
+                this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 1; this.lastWasPrev = 0;
                 push(BYTECODE_NEXT);
-                pushInt(1);
             }
         }
         public void writePrev() {
-            if (this.lastWasPrev) {
-                this.writeInt(this.pc - 4, this.readInt(this.pc - 4) + 1);
+            if (this.lastWasPrev == 1) {
+                this.write(this.pc - 1, BYTECODE_PREV_MULTI);
+                this.pushInt(2);
+                this.lastWasPrev++;
+            } else if (this.lastWasPrev > 1) {
+                var oldValue = this.readInt(this.pc - 4);
+                this.writeInt(this.pc - 4, oldValue + 1);
             } else {
-                this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = true;
+                this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 1;
                 push(BYTECODE_PREV);
-                pushInt(1);
             }
         }
 
@@ -412,7 +447,6 @@ public class Brain {
         }
 
         public byte write(int index, byte b) {
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
             this.byteCode[index] = b;
             return b;
         }
@@ -462,40 +496,40 @@ public class Brain {
         }
 
         public void writePrint() {
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             this.push(BYTECODE_PRINT);
         }
 
         public void writeFromInput() {
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             this.push(BYTECODE_READ_FROM_INPUT);
         }
 
         public void writeStartLoop() {
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             bracketsBytePos.push(this.pc);
             this.push(BYTECODE_START_LOOP);
             this.pushInt(0);
         }
 
         public void writeEndLoop() {
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             var endBracketPos = this.pc;
             this.push(BYTECODE_END_LOOP);
             var lastBracketPos = bracketsBytePos.pop();
             var distance = endBracketPos - lastBracketPos;
-            System.out.println("distance="+distance);
             this.pushInt(distance);
             this.writeInt(lastBracketPos+1, distance);
         }
 
         public void writeDebugger() {
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             this.push(BYTECODE_DEBUGGER);
         }
 
         public void finish() {
             this.byteCode = Arrays.copyOf(this.byteCode, this.pc);
-            this.lastWasInc = false; this.lastWasDec = false; this.lastWasNext = false; this.lastWasPrev = false;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             this.pc = 0;
         }
 
