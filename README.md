@@ -1,5 +1,5 @@
 # brainf_ck
-is my [codingchallenges.fyi](https://codingchallenges.fyi/challenges/challenge-brainfuck) implementation with a compiler and VM for the esoteric language brainfuck 
+is my [codingchallenges.fyi](https://codingchallenges.fyi/challenges/challenge-brainfuck) implementation with a compiler and VM for the esoteric language brainf_ck 
 
 ## what is branfuck?
 
@@ -21,9 +21,9 @@ Official website: https://brainfuck.org/
 run the application with parameter --help to see the arguments
 
 ```bash
-./run.sh
-Usage: brainfuck [-hvV] [-vv] [-c[=<command>]] [<file>]
-This challenge is to build your own brainfuck implementation
+./brainf_uck.sh
+Usage: brainf_ck [-hvV] [-vv] [-c[=<command>]] [<file>]
+This challenge is to build your own brainf_ck implementation
       [<file>]      parameter file to execute
   -c=[<command>]    executes the command passed
   -h, --help        Show this help message and exit.
@@ -38,10 +38,10 @@ This challenge is to build your own brainfuck implementation
 just pass no arguments
 
 ```bash
-./run.sh
-brainfuck>> test
+./brainf_uck.sh
+brainf_ck>> test
 test
-brainfuck>> 
+brainf_ck>> 
 bye
 
 ```
@@ -51,11 +51,11 @@ to close: just press <enter>
 ## execute a command from a file
 
 ```bash
-./run.sh hello.bf
+./brainf_uck.sh hello.bf
 ```
 
 ## run with inline command
 
 ```bash
-./run.sh -c "++++++++++[>+>+++>+++++++>++++++++++<<<<-]>>>++.>+++++.<<<."
+./brainf_uck.sh -c "++++++++++[>+>+++>+++++++>++++++++++<<<<-]>>>++.>+++++.<<<."
 ```

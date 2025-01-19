@@ -1,13 +1,15 @@
-package brainfuck;
+package brainf_ck;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Optional;
 import java.util.Scanner;
 
-public class BrainfuckCommandline {
+public class Brainf_ckCommandline {
 
-    public void run(String command) {
+    public void run(String command) throws IOException {
             var validInput = !command.isBlank();
             if (validInput) {
                 this.executeCommand(command);
@@ -28,9 +30,9 @@ public class BrainfuckCommandline {
         System.out.println("bye");
     }
 
-    public void run(File file) {
+    public void run(Reader reader) throws IOException {
         String content = "";
-        try (Scanner scanner = new Scanner(file)) {
+        try (Scanner scanner = new Scanner(reader)) {
             scanner.useDelimiter("\\A");
             if (scanner.hasNext()) {
                 content = scanner.next();
@@ -42,8 +44,12 @@ public class BrainfuckCommandline {
         this.run(content);
     }
 
-    public void executeCommand(String command) {
-        System.out.println(command);
+    public void run(File file) throws IOException {
+        this.run(new FileReader(file));
+    }
+
+    public void executeCommand(String command) throws IOException {
+        new Brain(command).compile();
     }
 
     private Optional<String> readFromConsole() throws IOException {

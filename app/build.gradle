@@ -7,7 +7,7 @@
  */
 apply plugin: "application"
 
-mainClassName = "brainfuck.Brainfuck"
+mainClassName = "brainf_ck.Brainf_ck"
 
 repositories {
     // Use Maven Central for resolving dependencies.
