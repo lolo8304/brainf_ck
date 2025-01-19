@@ -49,7 +49,11 @@ public class Brainf_ckCommandline {
     }
 
     public void executeCommand(String command) throws IOException {
-        new Brain(command).compile();
+        if (Brainf_ck.interpret()) {
+            new Brain(command).interpret();
+        } else {
+            new Brain(command).interpretUsingVM();
+        }
     }
 
     private Optional<String> readFromConsole() throws IOException {

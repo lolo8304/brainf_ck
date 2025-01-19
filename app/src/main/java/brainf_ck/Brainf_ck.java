@@ -18,6 +18,7 @@ public class Brainf_ck implements Callable<Result> {
     public static int _verbose = 0;
     public static int _timeout = 100;
     public static boolean _clearScreen = false;
+    public static boolean _interpret = false;
 
     public static boolean verbose() {
         return _verbose >= 1;
@@ -28,6 +29,10 @@ public class Brainf_ck implements Callable<Result> {
 
     public static boolean clearScreen() {
         return _clearScreen;
+    }
+
+    public static boolean interpret() {
+        return _interpret;
     }
 
     public static void main(String[] args) {
@@ -58,12 +63,16 @@ public class Brainf_ck implements Callable<Result> {
     @Option(names = "-clear", description = "clear screen at every step")
     boolean clear = false;
 
+    @Option(names = "-i", description = "use interpreter only instead of byte code")
+    boolean interpret = false;
+
     @Override
     public Result call() throws Exception {
         if (this.verbose) _verbose = 1;
         if (this.verbose2) _verbose = 2;
         if (this.timeout > 0) _timeout = timeout;
         if (this.clear) _clearScreen = true;
+        if (this.interpret) _interpret = true;
         if (file != null) {
             if (file.exists()) {
                 new Brainf_ckCommandline().run(file);

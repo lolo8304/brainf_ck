@@ -47,86 +47,163 @@ class Brainf_ckTest {
         new Brainf_ckCommandline();
     }
 
-    @Test void compile_dataInc_ok() throws IOException {
+    @Test void interpret_dataInc_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
         var context = new Brain("++", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(2, mem[0]);
     }
 
 
-    @Test void compile_nextInc_ok() throws IOException {
+    @Test void interpret_nextInc_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
         var context = new Brain(">+++", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(0, mem[0]);
         Assertions.assertEquals(3, mem[1]);
     }
 
-    @Test void compile_nextDecInc_ok() throws IOException {
+    @Test void interpret_nextDecInc_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
         var context = new Brain(">+<++", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(2, mem[0]);
         Assertions.assertEquals(1, mem[1]);
     }
-    @Test void compile_loop1_ok() throws IOException {
+    @Test void interpret_loop1_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
         var context = new Brain("[ loop ]>+", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(0, mem[0]);
         Assertions.assertEquals(1, mem[1]);
     }
 
-    @Test void compile_loop2_ok() throws IOException {
+    @Test void interpret_loop2_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
         var context = new Brain("[ [loop] ]>+", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(0, mem[0]);
         Assertions.assertEquals(1, mem[1]);
     }
 
-    @Test void compile_iterate_loop1_ok() throws IOException {
+    @Test void interpret_iterate_loop1_ok() throws IOException {
         // Arrange
         Brainf_ck._verbose = 2;
-        var context = new Brain("+[-]>+", 10);
+        var context = new Brain("++[-]>+", 10);
         var mem = context.memory();
 
         // Action
-        context.compile();
+        context.interpret();
+        context.interpretUsingVM();
 
         // Assert
         Assertions.assertEquals(0, mem[0]);
         Assertions.assertEquals(1, mem[1]);
+    }
+
+    @Test void compile_simple_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+>+-<-", 10);
+
+        // Action
+        var bytecode = context.compile();
+
+        // Assert
+        Assertions.assertEquals(30, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_PREV, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());bytecode.nextInt();
+    }
+
+    @Test void compile_iterate_loop1_ok() throws IOException {
+        // Arrange
+        var context = new Brain("[]>+", 10);
+
+        // Action
+        var bytecode = context.compile();
+
+        // Assert
+        Assertions.assertEquals(20, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
+        Assertions.assertEquals(5, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
+        Assertions.assertEquals(5, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+    }
+    @Test void compile_iterate_longer_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+[[]-]>+", 10);
+
+        // Action
+        var bytecode = context.compile();
+
+        // Assert
+        Assertions.assertEquals(40, bytecode.length());
+        var b=0;
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
+        Assertions.assertEquals(20, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
+        Assertions.assertEquals(5, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
+        Assertions.assertEquals(5, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next()); bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
+        Assertions.assertEquals(20, bytecode.nextInt());
+        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next()); bytecode.nextInt();
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next()); bytecode.nextInt();
+    }
+
+    @Test void interpret_hello_ok() throws IOException {
+        // Arrange
+        var context = new Brain("++++++++++[>+>+++>+++++++>++++++++++<<<<-]>>>++.>+.+++++++..+++.", 10);
+
+        // Action
+        var bytecode = context.compile();
+        context.interpretUsingVM();
+
+        // Assert
+        Assertions.assertEquals(90, bytecode.length());
+
+
     }
 }
