@@ -64,7 +64,7 @@ public class Brain {
                     if (this.pointer == this.memorySize) this.pointer = 0;
                     break;
                 case '<':
-                    if (this.pointer > 0) {
+                    if (this.pointer != 0) {
                         this.pointer--;
                     } else {
                         this.pointer = this.memorySize - 1;
