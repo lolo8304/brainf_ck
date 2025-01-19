@@ -56,15 +56,19 @@ public class Brain {
     public void compile() throws IOException {
         this.logStart();
         while (this.pc < this.programSize) {
-            this.statCountOps++;
-            this.log();
+            if (Brainf_ck.verbose()) this.log();
             var ch = this.programChar(this.pc);
             switch (ch) {
                 case '>':
-                    this.pointer = (this.pointer + 1) % this.memorySize;
+                    this.pointer++;
+                    if (this.pointer == this.memorySize) this.pointer = 0;
                     break;
                 case '<':
-                    this.pointer = (this.pointer - 1) % this.memorySize;
+                    if (this.pointer > 0) {
+                        this.pointer--;
+                    } else {
+                        this.pointer = this.memorySize - 1;
+                    }
                     break;
                 case '+':
                     this.memory[this.pointer]++;
@@ -119,7 +123,7 @@ public class Brain {
             }
             this.pc++;
         }
-        this.log();
+        if (Brainf_ck.verbose()) this.log();
         System.out.println();
         this.logSummary();
     }
@@ -134,6 +138,7 @@ public class Brain {
     }
 
     public void log() {
+        if (!Brainf_ck.verbose()) return;
         if (Brainf_ck._timeout > 0) {
             if (this.pc < this.programSize && this.tokens.contains(this.programChar(this.pc))) {
                 try {
@@ -143,13 +148,10 @@ public class Brain {
                 }
             }
         }
-        if (!Brainf_ck.verbose() && !Brainf_ck.verbose2()) return;
         if (Brainf_ck.clearScreen()) {
             try {
                 new ProcessBuilder("clear").inheritIO().start().waitFor();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
+            } catch (InterruptedException | IOException e) {
                 throw new RuntimeException(e);
             }
         }
