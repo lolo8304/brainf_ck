@@ -157,7 +157,6 @@ public class Brain {
             this.pc++;
         }
         if (Brainf_ck.verbose()) this.log();
-        System.out.println();
         this.logSummary();
     }
 
