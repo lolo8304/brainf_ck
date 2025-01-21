@@ -19,6 +19,8 @@ public class Brainf_ck implements Callable<Result> {
     public static int _timeout = 100;
     public static boolean _clearScreen = false;
     public static boolean _interpret = false;
+    public static int _bufferSize = 50;
+    private static boolean _clearAfterInput = false;
 
     public static boolean verbose() {
         return _verbose >= 1;
@@ -33,6 +35,13 @@ public class Brainf_ck implements Callable<Result> {
 
     public static boolean interpret() {
         return _interpret;
+    }
+    public static int bufferSize() {
+        return _bufferSize;
+    }
+
+    public static boolean clearAfterInput() {
+        return _clearAfterInput;
     }
 
     public static void main(String[] args) {
@@ -66,6 +75,12 @@ public class Brainf_ck implements Callable<Result> {
     @Option(names = "-i", description = "use interpreter only instead of byte code")
     boolean interpret = false;
 
+    @Option(names = "-ci", description = "clear the screen after input")
+    boolean clearAfterInput = false;
+
+    @Option(names = "-b", description = "size of the outputbuffer = default 50. e.g for each use -b 1")
+    int bufferSize = 50;
+
     @Override
     public Result call() throws Exception {
         if (this.verbose) _verbose = 1;
@@ -73,6 +88,8 @@ public class Brainf_ck implements Callable<Result> {
         if (this.timeout > 0) _timeout = timeout;
         if (this.clear) _clearScreen = true;
         if (this.interpret) _interpret = true;
+        if (this.clearAfterInput) _clearAfterInput = true;
+        _bufferSize = this.bufferSize;
         if (file != null) {
             if (file.exists()) {
                 new Brainf_ckCommandline().run(file);

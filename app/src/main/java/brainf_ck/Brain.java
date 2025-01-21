@@ -12,15 +12,19 @@ public class Brain {
     public static final byte BYTECODE_PREV = 0x02;
     public static final byte BYTECODE_INC = 0x03;
     public static final byte BYTECODE_DEC = 0x04;
-    public static final byte BYTECODE_NEXT_MULTI = 0x11;
-    public static final byte BYTECODE_PREV_MULTI = 0x12;
-    public static final byte BYTECODE_INC_MULTI = 0x13;
-    public static final byte BYTECODE_DEC_MULTI = 0x14;
+    public static final byte BYTECODE_SET_TO_0 = 0x05;
+    public static final byte BYTECODE_SET_TO_0_AND_MOVE = 0x06;
+
     public static final byte BYTECODE_PRINT = 0x0A;
     public static final byte BYTECODE_READ_FROM_INPUT = 0x0B;
     public static final byte BYTECODE_DEBUGGER = 0xC;
     public static final byte BYTECODE_START_LOOP = 0x0D;
     public static final byte BYTECODE_END_LOOP = 0x0E;
+
+    public static final byte BYTECODE_NEXT_MULTI = 0x11;
+    public static final byte BYTECODE_PREV_MULTI = 0x12;
+    public static final byte BYTECODE_INC_MULTI = 0x13;
+    public static final byte BYTECODE_DEC_MULTI = 0x14;
     private final int memorySize;
     private final byte[] memory;
     private final String program;
@@ -55,6 +59,9 @@ public class Brain {
 
     public byte[] memory() {
         return this.memory;
+    }
+    public ByteCode byteCode() {
+        return this.bytecode;
     }
     public byte memoryValue(int pos) {
         this.statCountMemoryRead++;
@@ -108,7 +115,7 @@ public class Brain {
                     if (Brainf_ck.verbose()) {
                         this.result.append((char) this.memoryValue(this.pointer));
                     } else {
-                        System.out.print((char) this.memoryValue(this.pointer));
+                        //System.out.print((char) this.memoryValue(this.pointer));
                     }
                     break;
                 case ',':
@@ -152,6 +159,14 @@ public class Brain {
         if (Brainf_ck.verbose()) this.log();
         System.out.println();
         this.logSummary();
+    }
+
+    private void addAndPrint(char ch) {
+        this.result.append(ch);
+        if (result.length() >= Brainf_ck.bufferSize()) {
+            System.out.print(result);
+            result.setLength(0);
+        }
     }
 
     public void executeVM() throws IOException {
@@ -201,11 +216,14 @@ public class Brain {
                     if (Brainf_ck.verbose()) {
                         this.result.append((char) this.memoryValue(this.pointer));
                     } else {
-                        System.out.print((char) this.memoryValue(this.pointer));
+                        this.addAndPrint((char) this.memoryValue(this.pointer));
                     }
                     break;
                 case BYTECODE_READ_FROM_INPUT: //,
                     this.memoryValue(this.pointer, (byte) System.in.read());
+                    if (Brainf_ck.clearAfterInput()) {
+                        this.clearScreen();
+                    }
                     break;
                 case BYTECODE_DEBUGGER: // #
                     System.in.read();
@@ -226,6 +244,12 @@ public class Brain {
                         bytecode.move(4);
                     }
                     break;
+                case BYTECODE_SET_TO_0:
+                    this.memoryValue(this.pointer, (byte)0);
+                case BYTECODE_SET_TO_0_AND_MOVE:
+                    this.memoryValue(this.pointer, (byte)0);
+                    this.pointer++;
+                    if (this.pointer == this.memorySize) this.pointer = 0;
                 default:
                     // skip - comment
             }
@@ -263,7 +287,13 @@ public class Brain {
                     bytecode.writeFromInput();
                     break;
                 case '[':
-                    bytecode.writeStartLoop();
+                    if (this.nextIs("[-]>111111")) {
+                        bytecode.writeSetTo0AndMove();
+                    } else if (this.nextIs("[-]1111111")) {
+                        bytecode.writeSetTo0();
+                    } else {
+                        bytecode.writeStartLoop();
+                    }
                     break;
                 case ']':
                     bytecode.writeEndLoop();
@@ -278,6 +308,22 @@ public class Brain {
         }
         bytecode.finish();
         return bytecode;
+    }
+
+    private boolean nextIs(String pattern) {
+        var index = this.pc;
+        var count = pattern.length();
+        var i = 0;
+        var ch = this.programChar(index++);
+        while (i < count && ch == pattern.charAt(i)) {
+            i++;
+            ch = index < this.programSize ? this.programChar(index++) : 0;
+        }
+        if (i == count) {
+            this.pc += (count - 1);
+            return true;
+        }
+        return false;
     }
 
     public void interpretUsingVM() throws IOException {
@@ -295,6 +341,13 @@ public class Brain {
         this.startTime = System.currentTimeMillis();
     }
 
+    public void clearScreen() {
+        try {
+            new ProcessBuilder("clear").inheritIO().start().waitFor();
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public void log() {
         if (!Brainf_ck.verbose()) return;
         if (Brainf_ck._timeout > 0) {
@@ -307,11 +360,7 @@ public class Brain {
             }
         }
         if (Brainf_ck.clearScreen()) {
-            try {
-                new ProcessBuilder("clear").inheritIO().start().waitFor();
-            } catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
-            }
+            this.clearScreen();
         }
         System.out.println(">"+this.result+"<");
         System.out.print("pc=" + this.pc + " (max=" + this.programSize + "), dc=" + this.pointer+ " ("+this.memorySize+"), ");
@@ -346,6 +395,7 @@ public class Brain {
 
     public void logSummary() {
         var time = System.currentTimeMillis() - this.startTime;
+        if (this.result.length() > 0) System.out.println(result);
         System.out.println("#Time="+NumberFormat.getInstance().format(time)+"ms, #ops=" + NumberFormat.getInstance().format(this.statCountOps)+", memory read="+NumberFormat.getInstance().format(this.statCountMemoryRead)+", memory writes="+NumberFormat.getInstance().format(this.statCountMemoryWrite));
     }
 
@@ -543,6 +593,15 @@ public class Brain {
 
         public void move(int i) {
             this.pc += i;
+        }
+
+        public void writeSetTo0() {
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
+            this.push(BYTECODE_SET_TO_0);
+        }
+        public void writeSetTo0AndMove() {
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
+            this.push(BYTECODE_SET_TO_0_AND_MOVE);
         }
     }
 

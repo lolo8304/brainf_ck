@@ -206,4 +206,49 @@ class Brainf_ckTest {
 
 
     }
+
+    @Test void compile_setto0_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+[-]", 10);
+
+        // Action
+        var bytecode = context.compile();
+
+        // Assert
+        Assertions.assertEquals(2, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0, bytecode.next());
+    }
+
+    @Test void compile_setto0andmove_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+[-]>+", 10);
+
+        // Action
+        var bytecode = context.compile();
+        context.interpretUsingVM();
+        var memory = context.memory();
+
+        // Assert
+        Assertions.assertEquals(3, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0_AND_MOVE, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+    }
+
+    @Test void executeVm_setto0andmove_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+[-]>+", 10);
+
+        // Action
+        context.interpretUsingVM();
+        var bytecode = context.byteCode();
+        var memory = context.memory();
+
+        // Assert
+        Assertions.assertEquals(3, bytecode.length());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0_AND_MOVE, bytecode.next());
+        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+    }
 }
