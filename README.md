@@ -158,4 +158,12 @@ I have implemented some testcases - 3 of them are now failing due to the switcho
 
 # Credits
 
-To John 
+To John Cricket and the great coding challenges
+https://codingchallenges.fyi/
+
+To daniel b cristofani
+https://brainfuck.org/
+
+To linusakesson
+http://www.linusakesson.net/programming/brainfuck/index.php
+
