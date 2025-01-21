@@ -251,4 +251,12 @@ class Brainf_ckTest {
         Assertions.assertEquals(Brain.BYTECODE_SET_TO_0_AND_MOVE, bytecode.next());
         Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
     }
+
+    @Test void interpretVM_fromfile_mandelbrot_ok() throws URISyntaxException, IOException {
+        // Arrange
+        var bf = ReadReader("mandelbrot.bf");
+
+        // Action
+        new Brainf_ckCommandline().run(bf);
+    }
 }

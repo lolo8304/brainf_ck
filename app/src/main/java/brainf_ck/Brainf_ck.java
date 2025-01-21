@@ -85,7 +85,10 @@ public class Brainf_ck implements Callable<Result> {
     public Result call() throws Exception {
         if (this.verbose) _verbose = 1;
         if (this.verbose2) _verbose = 2;
-        if (this.timeout > 0) _timeout = timeout;
+        if (this.timeout > 0) {
+            _timeout = timeout;
+            _verbose = 2;
+        }
         if (this.clear) _clearScreen = true;
         if (this.interpret) _interpret = true;
         if (this.clearAfterInput) _clearAfterInput = true;

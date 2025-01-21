@@ -115,7 +115,7 @@ public class Brain {
                     if (Brainf_ck.verbose()) {
                         this.result.append((char) this.memoryValue(this.pointer));
                     } else {
-                        //System.out.print((char) this.memoryValue(this.pointer));
+                        System.out.print((char) this.memoryValue(this.pointer));
                     }
                     break;
                 case ',':
@@ -156,7 +156,11 @@ public class Brain {
             }
             this.pc++;
         }
-        if (Brainf_ck.verbose()) this.log();
+        if (Brainf_ck.verbose()) {
+            this.log();
+        } else {
+            System.out.println();
+        }
         this.logSummary();
     }
 
@@ -253,7 +257,7 @@ public class Brain {
                     // skip - comment
             }
         }
-        System.out.println();
+        bytecode.reset();
         this.logSummary();
     }
 
@@ -286,9 +290,9 @@ public class Brain {
                     bytecode.writeFromInput();
                     break;
                 case '[':
-                    if (this.nextIs("[-]>111111")) {
+                    if (this.nextIs("[-]>buggy")) {
                         bytecode.writeSetTo0AndMove();
-                    } else if (this.nextIs("[-]1111111")) {
+                    } else if (this.nextIs("[-]buggy")) {
                         bytecode.writeSetTo0();
                     } else {
                         bytecode.writeStartLoop();
@@ -301,7 +305,7 @@ public class Brain {
                     bytecode.writeDebugger();
                     break;
                 default:
-                    // skip - comment
+                    // skip
             }
             this.pc++;
         }
@@ -578,8 +582,7 @@ public class Brain {
 
         public void finish() {
             this.byteCode = Arrays.copyOf(this.byteCode, this.pc);
-            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
-            this.pc = 0;
+            this.reset();
         }
 
         public int length() {
@@ -601,6 +604,11 @@ public class Brain {
         public void writeSetTo0AndMove() {
             this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
             this.push(BYTECODE_SET_TO_0_AND_MOVE);
+        }
+
+        public void reset() {
+            this.pc = 0;
+            this.lastWasInc = 0; this.lastWasDec = 0; this.lastWasNext = 0; this.lastWasPrev = 0;
         }
     }
 
