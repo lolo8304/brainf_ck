@@ -183,7 +183,7 @@ public class Brain {
     }
 
     public void executeVM() throws IOException {
-        var overflowCheck = !Brainf_ck.noOverflowCheck();
+        var overflowCheck = Brainf_ck.overflowCheck();
         if (this.bytecode.length() == 0) throw new IOException("Program not compiled");
         this.logStart();
         this.initExecution();

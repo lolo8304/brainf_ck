@@ -115,13 +115,16 @@ public class ByteCode {
     }
 
     public int readInt(int index) {
-        var bytes = new byte[4];
-        var offset = index;
-        bytes[0] = this.byteCode[offset++];
-        bytes[1] = this.byteCode[offset++];
-        bytes[2] = this.byteCode[offset++];
-        bytes[3] = this.byteCode[offset];
-        return bytesToInt(bytes);
+        var b0 = this.byteCode[index++];
+        var b1 = this.byteCode[index++];
+        var b2 = this.byteCode[index++];
+        var b3 = this.byteCode[index];
+        if (b0 == 0x00 && b1 ==  0x00 && b2 ==  0x00) return b3 & 0xFF;
+        return ((b0 & 0xFF) << 24) | // Most significant byte
+                ((b1 & 0xFF) << 16) | // Second byte
+                ((b2 & 0xFF) << 8) | // Third byte
+                (b3 & 0xFF);         // Least significant byte
+
     }
 
     public static byte[] intToBytes(int number) {

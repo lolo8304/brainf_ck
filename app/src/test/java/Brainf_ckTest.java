@@ -349,4 +349,5 @@ class Brainf_ckTest {
         // Action
         new Brainf_ckCommandline().run(bf);
     }
+
 }
