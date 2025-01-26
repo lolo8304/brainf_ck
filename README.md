@@ -24,13 +24,14 @@ run the application with parameter --help to see the arguments
 
 ```bash
 ./brainf_uck.sh
-Usage: brainf_ck [-hivV] [-ci] [-clear] [-vv] [-c[=<command>]] [-t[=<timeout>]]
-                 [-b=<bufferSize>] [<file>]
+Usage: brainf_ck [-hivV] [-] [-ci] [-clear] [-vv] [-c[=<command>]] [-t
+                 [=<timeout>]] [-b=<bufferSize>] [<file>]
 This challenge is to build your own brainfuck implementation. In console mode,
 press enter to close
       [<file>]       parameter file to execute
-  -b=<bufferSize>    size of the outputbuffer = default 50. e.g for each use -b
-                       1
+      -              verify overflow
+  -b=<bufferSize>    size of the outputbuffer = default 1000. e.g for each use
+                       -b 1
   -c=[<command>]     executes the command passed
       -ci            clear the screen after input
       -clear         clear screen at every step
@@ -40,7 +41,6 @@ press enter to close
   -v                 verbose model level 1
   -V, --version      Print version information and exit.
       -vv            verbose model level 2
-
 ```
 
 ## run command line
@@ -92,6 +92,10 @@ waits for <number> ms at each step. Switches on automatically -vv verbose switch
 -v
 
 verbose mode 1 - shows statistics at each step
+
+-o 
+
+overflow checks for memory above 30'000 or below 0
 
 ```log
 pc=85 (max=11669), dc=0 (30000), pc-ops=1’826, read=6, write=46
@@ -153,8 +157,7 @@ gradle installDist or use gradle inside your IDE
 
 ## Run testcases
 
-I have implemented some testcases - 3 of them are now failing due to the switchoff of some performacen optimization features. 
-
+I have implemented lots of AAA testcases.
 
 # Credits
 
