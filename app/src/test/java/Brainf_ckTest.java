@@ -6,6 +6,7 @@
 import brainf_ck.Brain;
 import brainf_ck.Brainf_ck;
 import brainf_ck.Brainf_ckCommandline;
+import brainf_ck.ByteCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,32 @@ import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 class Brainf_ckTest {
+    private static Map<String, Byte> BYTE_STRING_CODE_MAPPING;
 
+    static {
+        BYTE_STRING_CODE_MAPPING = new HashMap<>();
+        BYTE_STRING_CODE_MAPPING.put("+", Brain.BYTECODE_INC);
+        BYTE_STRING_CODE_MAPPING.put("-", Brain.BYTECODE_DEC);
+        BYTE_STRING_CODE_MAPPING.put("++", Brain.BYTECODE_INC_MULTI);
+        BYTE_STRING_CODE_MAPPING.put("--", Brain.BYTECODE_DEC_MULTI);
+        BYTE_STRING_CODE_MAPPING.put("<", Brain.BYTECODE_PREV);
+        BYTE_STRING_CODE_MAPPING.put(">", Brain.BYTECODE_NEXT);
+        BYTE_STRING_CODE_MAPPING.put("<<", Brain.BYTECODE_PREV_MULTI);
+        BYTE_STRING_CODE_MAPPING.put(">>", Brain.BYTECODE_NEXT_MULTI);
+        BYTE_STRING_CODE_MAPPING.put("[", Brain.BYTECODE_START_LOOP);
+        BYTE_STRING_CODE_MAPPING.put("]", Brain.BYTECODE_END_LOOP);
+        BYTE_STRING_CODE_MAPPING.put(",", Brain.BYTECODE_READ_FROM_INPUT);
+        BYTE_STRING_CODE_MAPPING.put(".", Brain.BYTECODE_PRINT);
+        BYTE_STRING_CODE_MAPPING.put("#", Brain.BYTECODE_DEBUGGER);
+
+        BYTE_STRING_CODE_MAPPING.put("[-]", Brain.BYTECODE_SET_TO_0);
+        BYTE_STRING_CODE_MAPPING.put("[-]>", Brain.BYTECODE_SET_TO_0_AND_MOVE);
+        BYTE_STRING_CODE_MAPPING.put("[-]>[-]>", Brain.BYTECODE_SET_TO_0_AND_MOVE_MULTI);
+    }
     private Reader reader;
 
     Reader ReadReader(String testfile) throws FileNotFoundException, URISyntaxException {
@@ -36,6 +60,34 @@ class Brainf_ckTest {
         Brainf_ck._verbose = 0;
         if (reader != null) {
             reader.close();
+        }
+    }
+
+    private void assertByteCode(ByteCode byteCode, String codeChar) {
+        this.assertByteCode(byteCode, BYTE_STRING_CODE_MAPPING.get(codeChar));
+    }
+
+    private void assertByteCode(ByteCode byteCode, String codeChar, Integer count) {
+        this.assertByteCode(byteCode, BYTE_STRING_CODE_MAPPING.get(codeChar), count);
+    }
+
+    private void assertByteCode(ByteCode byteCode, byte code) {
+        var codeFromBytes = byteCode.next();
+        if (Brain.BYTECODES_SET_1_BYTE.contains(codeFromBytes)) {
+            Assertions.assertEquals(code, codeFromBytes);
+        } else {
+            Assertions.fail("Single bytecode expected but received multi "+codeFromBytes);
+        }
+    }
+
+    private void assertByteCode(ByteCode byteCode, byte code, Integer count) {
+        var codeFromBytes = byteCode.next();
+        if (!Brain.BYTECODES_SET_1_BYTE.contains(codeFromBytes)) {
+            Assertions.assertEquals(code, codeFromBytes);
+            var countFromBytes = byteCode.nextInt();
+            Assertions.assertEquals(count, countFromBytes);
+        } else {
+            Assertions.fail("Multi bytecode expected but received single "+codeFromBytes);
         }
     }
 
@@ -145,12 +197,12 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(6, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_PREV, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "-");
+        this.assertByteCode(bytecode, "<");
+        this.assertByteCode(bytecode, "-");
     }
 
     @Test void compile_iterate_loop1_ok() throws IOException {
@@ -162,12 +214,10 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(12, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
-        Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
-        Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        this.assertByteCode(bytecode, "[", 5);
+        this.assertByteCode(bytecode, "]", 5);
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "+");
     }
     @Test void compile_iterate_longer_ok() throws IOException {
         // Arrange
@@ -178,19 +228,15 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(24, bytecode.length());
-        var b=0;
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
-        Assertions.assertEquals(16, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_START_LOOP, bytecode.next());
-        Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
-        Assertions.assertEquals(5, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_DEC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_END_LOOP, bytecode.next());
-        Assertions.assertEquals(16, bytecode.nextInt());
-        Assertions.assertEquals(Brain.BYTECODE_NEXT, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "[", 16);
+        this.assertByteCode(bytecode, "[", 5);
+        this.assertByteCode(bytecode, "]", 5);
+        this.assertByteCode(bytecode, "-");
+        this.assertByteCode(bytecode, "]", 16);
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "+");
+
     }
 
     @Test void interpret_hello_ok() throws IOException {
@@ -216,8 +262,26 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(2, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0, bytecode.next());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "[-]");
+    }
+
+    @Test void compile_setto0xtimes_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+>++>+++<<[-]>[-]>[-]>", 10);
+
+        // Action
+        var bytecode = context.compile();
+
+        // Assert
+        Assertions.assertEquals(23, bytecode.length());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "++",2);
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "++", 3);
+        this.assertByteCode(bytecode, "<<", 2);
+        this.assertByteCode(bytecode, "[-]>[-]>", 3);
     }
 
     @Test void compile_setto0andmove_ok() throws IOException {
@@ -231,9 +295,35 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(3, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0_AND_MOVE, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "[-]>");
+        this.assertByteCode(bytecode, "+");
+    }
+
+    @Test void execute_setto0_ok() throws IOException {
+        // Arrange
+        var context = new Brain("+>+[-]<>>++", 10);
+
+        // Action
+        var bytecode = context.compile();
+        context.interpretUsingVM();
+        var memory = context.memory();
+
+        // Assert
+        Assertions.assertEquals(15, bytecode.length());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, ">");
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "[-]");
+        this.assertByteCode(bytecode, "<");
+        this.assertByteCode(bytecode, ">>", 2);
+        this.assertByteCode(bytecode, "++", 2);
+
+        // memory should be: 1 0 1
+        Assertions.assertEquals(1, memory[0]);
+        Assertions.assertEquals(0, memory[1]);
+        Assertions.assertEquals(2, memory[2]);
     }
 
     @Test void executeVm_setto0andmove_ok() throws IOException {
@@ -247,9 +337,9 @@ class Brainf_ckTest {
 
         // Assert
         Assertions.assertEquals(3, bytecode.length());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_SET_TO_0_AND_MOVE, bytecode.next());
-        Assertions.assertEquals(Brain.BYTECODE_INC, bytecode.next());
+        this.assertByteCode(bytecode, "+");
+        this.assertByteCode(bytecode, "[-]>");
+        this.assertByteCode(bytecode, "+");
     }
 
     @Test void interpretVM_fromfile_mandelbrot_ok() throws URISyntaxException, IOException {

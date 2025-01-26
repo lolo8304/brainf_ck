@@ -21,6 +21,7 @@ public class Brainf_ck implements Callable<Result> {
     public static boolean _interpret = false;
     public static int _bufferSize = 50;
     private static boolean _clearAfterInput = false;
+    private static boolean _noOverflowCheck = false;
 
     public static boolean verbose() {
         return _verbose >= 1;
@@ -43,6 +44,12 @@ public class Brainf_ck implements Callable<Result> {
     public static boolean clearAfterInput() {
         return _clearAfterInput;
     }
+
+    public static boolean noOverflowCheck() {
+        return _noOverflowCheck;
+    }
+
+
 
     public static void main(String[] args) {
         var brainfuck = new Brainf_ck();
@@ -78,8 +85,11 @@ public class Brainf_ck implements Callable<Result> {
     @Option(names = "-ci", description = "clear the screen after input")
     boolean clearAfterInput = false;
 
-    @Option(names = "-b", description = "size of the outputbuffer = default 50. e.g for each use -b 1")
-    int bufferSize = 50;
+    @Option(names = "-n", description = "no verify overflow")
+    boolean noOverflowCheck = false;
+
+    @Option(names = "-b", description = "size of the outputbuffer = default 1000. e.g for each use -b 1")
+    int bufferSize = 1000;
 
     @Override
     public Result call() throws Exception {
@@ -92,6 +102,7 @@ public class Brainf_ck implements Callable<Result> {
         if (this.clear) _clearScreen = true;
         if (this.interpret) _interpret = true;
         if (this.clearAfterInput) _clearAfterInput = true;
+        if (this.noOverflowCheck) _noOverflowCheck = true;
         _bufferSize = this.bufferSize;
         if (file != null) {
             if (file.exists()) {
