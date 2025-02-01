@@ -82,14 +82,14 @@ public class Brainf_ck implements Callable<Result> {
     @Option(names = "-i", description = "use interpreter only instead of byte code")
     boolean interpret = false;
 
-    @Option(names = "-ci", description = "clear the screen after input")
+    @Option(names = "-ci", description = "clear the screen after input. default false")
     boolean clearAfterInput = false;
 
-    @Option(names = "-", description = "verify overflow")
+    @Option(names = "-o", description = "verify overflow. default false")
     boolean overflowCheck = false;
 
-    @Option(names = "-b", description = "size of the outputbuffer = default 1000. e.g for each use -b 1")
-    int bufferSize = 1000;
+    @Option(names = "-b", description = "size of the outputbuffer = default 100'000. e.g for each use -b 1")
+    int bufferSize = 1000000;
 
     @Override
     public Result call() throws Exception {

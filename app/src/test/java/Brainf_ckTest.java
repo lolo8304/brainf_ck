@@ -215,7 +215,7 @@ class Brainf_ckTest {
         // Assert
         Assertions.assertEquals(12, bytecode.length());
         this.assertByteCode(bytecode, "[", 5);
-        this.assertByteCode(bytecode, "]", 5);
+        this.assertByteCode(bytecode, "]", 10);
         this.assertByteCode(bytecode, ">");
         this.assertByteCode(bytecode, "+");
     }
@@ -231,9 +231,9 @@ class Brainf_ckTest {
         this.assertByteCode(bytecode, "+");
         this.assertByteCode(bytecode, "[", 16);
         this.assertByteCode(bytecode, "[", 5);
-        this.assertByteCode(bytecode, "]", 5);
+        this.assertByteCode(bytecode, "]", 10);
         this.assertByteCode(bytecode, "-");
-        this.assertByteCode(bytecode, "]", 16);
+        this.assertByteCode(bytecode, "]", 21);
         this.assertByteCode(bytecode, ">");
         this.assertByteCode(bytecode, "+");
 

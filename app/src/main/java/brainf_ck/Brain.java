@@ -30,9 +30,9 @@ public class Brain {
     public static final Byte[] BYTECODES_1_BYTE = {
             BYTECODE_NEXT, BYTECODE_PREV, BYTECODE_INC, BYTECODE_DEC,
             BYTECODE_PRINT, BYTECODE_READ_FROM_INPUT, BYTECODE_DEBUGGER,
-            BYTECODE_SET_TO_0, BYTECODE_SET_TO_0_AND_MOVE };
+            BYTECODE_SET_TO_0, BYTECODE_SET_TO_0_AND_MOVE};
     public static final Byte[] BYTECODES_1_BYTE_ONLY = {
-            BYTECODE_PRINT, BYTECODE_READ_FROM_INPUT, BYTECODE_DEBUGGER,  BYTECODE_SET_TO_0 };
+            BYTECODE_PRINT, BYTECODE_READ_FROM_INPUT, BYTECODE_DEBUGGER, BYTECODE_SET_TO_0};
     public static final Set<Byte> BYTECODES_SET_1_BYTE = new HashSet<>(List.of(BYTECODES_1_BYTE));
     public static final Set<Byte> BYTECODES_SET_1_BYTE_ONLY = new HashSet<>(List.of(BYTECODES_1_BYTE_ONLY));
     private final int memorySize;
@@ -50,8 +50,9 @@ public class Brain {
     private ByteCode bytecode;
 
     public Brain(String program) {
-        this(program,30000);
+        this(program, 30000);
     }
+
     public Brain(String program, int memorySize) {
         this.program = program;
         this.memorySize = memorySize;
@@ -60,7 +61,7 @@ public class Brain {
         this.programSize = this.program.length();
         this.pointer = 0;
         this.tokens = Set.of('+', '-', '{', '}', '[', ']', '.', ',');
-        this.result = new StringBuilder();
+        this.result = new StringBuilder(100000);
         this.statCountOps = 0L;
         this.statCountMemoryRead = 0L;
         this.statCountMemoryWrite = 0L;
@@ -70,15 +71,24 @@ public class Brain {
     public byte[] memory() {
         return this.memory;
     }
+
     public ByteCode byteCode() {
         return this.bytecode;
     }
+
     public byte memoryValue(int pos) {
         this.statCountMemoryRead++;
         return this.memory[pos];
     }
+    public byte memoryValueNoStat(int pos) {
+        return this.memory[pos];
+    }
+
     public void memoryValue(int pos, byte value) {
         this.statCountMemoryWrite++;
+        this.memory[pos] = value;
+    }
+    public void memoryValueNoStat(int pos, byte value) {
         this.memory[pos] = value;
     }
 
@@ -95,6 +105,7 @@ public class Brain {
             this.memory[i] = 0;
         }
     }
+
     public void interpret() throws IOException {
         this.logStart();
         this.initExecution();
@@ -137,8 +148,12 @@ public class Brain {
                         ch = this.programChar(++this.pc);
                         while (loopCounter > 0) {
                             switch (ch) {
-                                case ']': loopCounter--; break;
-                                case '[': loopCounter++; break;
+                                case ']':
+                                    loopCounter--;
+                                    break;
+                                case '[':
+                                    loopCounter++;
+                                    break;
                             }
                             ch = this.programChar(++this.pc);
                         }
@@ -151,8 +166,12 @@ public class Brain {
                         ch = this.programChar(--this.pc);
                         while (loopCounter > 0) {
                             switch (ch) {
-                                case ']': loopCounter++; break;
-                                case '[': loopCounter--; break;
+                                case ']':
+                                    loopCounter++;
+                                    break;
+                                case '[':
+                                    loopCounter--;
+                                    break;
                             }
                             ch = this.programChar(--this.pc);
                         }
@@ -181,99 +200,182 @@ public class Brain {
             result.setLength(0);
         }
     }
+    private void justAdd(char ch) {
+        this.result.append(ch);
+    }
 
     public void executeVM() throws IOException {
-        var overflowCheck = Brainf_ck.overflowCheck();
+        var overflowCheck = Brainf_ck.overflowCheck() || Brainf_ck.verbose();
         if (this.bytecode.length() == 0) throw new IOException("Program not compiled");
         this.logStart();
         this.initExecution();
-        while (bytecode.hasNext()) {
-            var b = this.bytecode.next(); this.statCountOps++;
-            switch (b) {
-                case BYTECODE_NEXT: // >
-                    this.pointer++;
-                    if (overflowCheck && this.pointer == this.memorySize) this.pointer = 0;
-                    break;
-                case BYTECODE_NEXT_MULTI: // >
-                    var countNext = this.bytecode.nextInt();
-                    this.pointer += countNext;
-                    if (overflowCheck && this.pointer >= this.memorySize) this.pointer = this.pointer - this.memorySize;
-                    break;
-                case BYTECODE_PREV: // <
-                    this.pointer--;
-                    if (overflowCheck && this.pointer == -1) this.pointer = this.memorySize - 1;
-                    break;
-                case BYTECODE_PREV_MULTI: // <
-                    var countPrev = this.bytecode.nextInt();
-                    this.pointer -= countPrev;
-                    if (overflowCheck && this.pointer < 0) this.pointer = this.memorySize + this.pointer;
-                    break;
-                case BYTECODE_INC: // +
-                    this.memory[this.pointer]++;
-                    this.statCountMemoryWrite++;
-                    break;
-                case BYTECODE_INC_MULTI: // +
-                    var countInc = this.bytecode.nextInt();
-                    this.memory[this.pointer] += countInc;
-                    this.statCountMemoryWrite++;
-                    break;
-                case BYTECODE_DEC: // -
-                    this.memory[this.pointer]--;
-                    this.statCountMemoryWrite++;
-                    break;
-                case BYTECODE_DEC_MULTI: // -
-                    var countDec = this.bytecode.nextInt();
-                    this.memory[this.pointer] -= countDec;
-                    this.statCountMemoryWrite++;
-                    break;
-                case BYTECODE_PRINT: // .
-                    if (Brainf_ck.verbose()) {
-                        this.result.append((char) this.memoryValue(this.pointer));
-                    } else {
-                        this.addAndPrint((char) this.memoryValue(this.pointer));
-                    }
-                    break;
-                case BYTECODE_READ_FROM_INPUT: //,
-                    this.memoryValue(this.pointer, (byte) System.in.read());
-                    if (Brainf_ck.clearAfterInput()) {
-                        this.clearScreen();
-                    }
-                    break;
-                case BYTECODE_DEBUGGER: // #
-                    System.in.read();
-                    break;
-                case BYTECODE_START_LOOP: // [
-                    if (this.memoryValue(this.pointer) == 0) {
-                        var endLoopDiff = bytecode.nextInt();
-                        bytecode.move(endLoopDiff);
-                    } else {
-                        bytecode.move(4);
-                    }
-                    break;
-                case BYTECODE_END_LOOP: // ]
-                    if (this.memoryValue(this.pointer) != 0) {
-                        var startLoopDiff = bytecode.nextInt();
-                        bytecode.move(- (startLoopDiff + 5)); // 4 bytes + 1 pos
-                    } else {
-                        bytecode.move(4);
-                    }
-                    break;
-                case BYTECODE_SET_TO_0:
-                    this.memoryValue(this.pointer, (byte)0);
-                    break;
-                case BYTECODE_SET_TO_0_AND_MOVE:
-                    this.memoryValue(this.pointer++, (byte)0);
-                    if (overflowCheck && this.pointer == this.memorySize) this.pointer = 0;
-                    break;
-                case BYTECODE_SET_TO_0_AND_MOVE_MULTI:
-                    var count = this.bytecode.nextInt();
-                    while (count-- > 0) {
-                        this.memoryValue(this.pointer++, (byte)0);
+        if (overflowCheck) {
+            var b = this.bytecode.next();
+            do {
+                this.statCountOps++;
+                switch (b) {
+                    case BYTECODE_NEXT: // >
+                        this.pointer++;
                         if (overflowCheck && this.pointer == this.memorySize) this.pointer = 0;
+                        break;
+                    case BYTECODE_NEXT_MULTI: // >
+                        var countNext = this.bytecode.nextInt();
+                        this.pointer += countNext;
+                        if (overflowCheck && this.pointer >= this.memorySize)
+                            this.pointer = this.pointer - this.memorySize;
+                        break;
+                    case BYTECODE_PREV: // <
+                        this.pointer--;
+                        if (overflowCheck && this.pointer == -1) this.pointer = this.memorySize - 1;
+                        break;
+                    case BYTECODE_PREV_MULTI: // <
+                        var countPrev = this.bytecode.nextInt();
+                        this.pointer -= countPrev;
+                        if (overflowCheck && this.pointer < 0) this.pointer = this.memorySize + this.pointer;
+                        break;
+                    case BYTECODE_INC: // +
+                        this.memory[this.pointer]++;
+                        this.statCountMemoryWrite++;
+                        break;
+                    case BYTECODE_INC_MULTI: // +
+                        var countInc = this.bytecode.nextInt();
+                        this.memory[this.pointer] += countInc;
+                        this.statCountMemoryWrite++;
+                        break;
+                    case BYTECODE_DEC: // -
+                        this.memory[this.pointer]--;
+                        this.statCountMemoryWrite++;
+                        break;
+                    case BYTECODE_DEC_MULTI: // -
+                        var countDec = this.bytecode.nextInt();
+                        this.memory[this.pointer] -= countDec;
+                        this.statCountMemoryWrite++;
+                        break;
+                    case BYTECODE_PRINT: // .
+                        if (Brainf_ck.verbose()) {
+                            this.result.append((char) this.memoryValue(this.pointer));
+                        } else {
+                            this.addAndPrint((char) this.memoryValue(this.pointer));
+                        }
+                        break;
+                    case BYTECODE_READ_FROM_INPUT: //,
+                        this.memoryValue(this.pointer, (byte) System.in.read());
+                        if (Brainf_ck.clearAfterInput()) {
+                            this.clearScreen();
+                        }
+                        break;
+                    case BYTECODE_DEBUGGER: // #
+                        System.in.read();
+                        break;
+                    case BYTECODE_START_LOOP: // [
+                        if (this.memoryValue(this.pointer) == 0) {
+                            var endLoopDiff = bytecode.nextInt();
+                            bytecode.move(endLoopDiff);
+                        } else {
+                            bytecode.move(4);
+                        }
+                        break;
+                    case BYTECODE_END_LOOP: // ]
+                        if (this.memoryValue(this.pointer) != 0) {
+                            var startLoopDiff = bytecode.nextInt();
+                            bytecode.moveBack(startLoopDiff); // 4 bytes + 1 pos
+                        } else {
+                            bytecode.move(4);
+                        }
+                        break;
+                    case BYTECODE_SET_TO_0:
+                        this.memoryValue(this.pointer, (byte) 0);
+                        break;
+                    case BYTECODE_SET_TO_0_AND_MOVE:
+                        this.memoryValue(this.pointer++, (byte) 0);
+                        if (overflowCheck && this.pointer == this.memorySize) this.pointer = 0;
+                        break;
+                    case BYTECODE_SET_TO_0_AND_MOVE_MULTI:
+                        var count = this.bytecode.nextInt();
+                        while (count-- > 0) {
+                            this.memoryValue(this.pointer++, (byte) 0);
+                            if (overflowCheck && this.pointer == this.memorySize) this.pointer = 0;
+                        }
+                        break;
+                    default:
+                        // skip - comment
+                }
+                b = this.bytecode.next();
+            } while (b != 0);
+        } else {
+            try {
+                var b = bytecode.nextNoIndexCheck();
+                while (true) {
+                    switch (b) {
+                        case BYTECODE_NEXT: // >
+                            this.pointer++;
+                            break;
+                        case BYTECODE_NEXT_MULTI: // >
+                            this.pointer += this.bytecode.nextInt();
+                            break;
+                        case BYTECODE_PREV: // <
+                            this.pointer--;
+                            break;
+                        case BYTECODE_PREV_MULTI: // <
+                            this.pointer -= this.bytecode.nextInt();
+                            break;
+                        case BYTECODE_INC: // +
+                            this.memory[this.pointer]++;
+                            break;
+                        case BYTECODE_INC_MULTI: // +
+                            this.memory[this.pointer] += this.bytecode.nextInt();
+                            break;
+                        case BYTECODE_DEC: // -
+                            this.memory[this.pointer]--;
+                            break;
+                        case BYTECODE_DEC_MULTI: // -
+                            this.memory[this.pointer] -= this.bytecode.nextInt();
+                            break;
+                        case BYTECODE_PRINT: // .
+                            this.result.append((char) this.memory[this.pointer]);
+                            break;
+                        case BYTECODE_READ_FROM_INPUT: //,
+                            this.memory[this.pointer] = (byte) System.in.read();
+                            if (Brainf_ck.clearAfterInput()) {
+                                this.clearScreen();
+                            }
+                            break;
+                        case BYTECODE_DEBUGGER: // #
+                            System.in.read();
+                            break;
+                        case BYTECODE_START_LOOP: // [
+                            if (this.memory[this.pointer] != 0) {
+                                bytecode.move(4);
+                            } else {
+                                bytecode.move(bytecode.nextInt());
+                            }
+                            break;
+                        case BYTECODE_END_LOOP: // ]
+                            if (this.memory[this.pointer] != 0) {
+                                bytecode.moveBack(bytecode.nextInt()); // 4 bytes + 1 pos
+                            } else {
+                                bytecode.move(4);
+                            }
+                            break;
+                        case BYTECODE_SET_TO_0:
+                            this.memory[this.pointer] = (byte) 0;
+                            break;
+                        case BYTECODE_SET_TO_0_AND_MOVE:
+                            this.memory[this.pointer++] = (byte) 0;
+                            break;
+                        case BYTECODE_SET_TO_0_AND_MOVE_MULTI:
+                            var count = this.bytecode.nextInt();
+                            while (count-- > 0) {
+                                this.memory[this.pointer++] = (byte) 0;
+                            }
+                            break;
+                        default:
+                            // skip - comment
                     }
-                    break;
-                default:
-                    // skip - comment
+                    b = bytecode.nextNoIndexCheck();
+                }
+            } catch (IndexOutOfBoundsException e) {
+
             }
         }
         bytecode.reset();
@@ -370,6 +472,7 @@ public class Brain {
             throw new RuntimeException(e);
         }
     }
+
     public void log() {
         if (!Brainf_ck.verbose()) return;
         if (Brainf_ck._timeout > 0) {
@@ -384,9 +487,9 @@ public class Brain {
         if (Brainf_ck.clearScreen()) {
             this.clearScreen();
         }
-        System.out.println(">"+this.result+"<");
-        System.out.print("pc=" + this.pc + " (max=" + this.programSize + "), dc=" + this.pointer+ " ("+this.memorySize+"), ");
-        System.out.print("pc-ops="+NumberFormat.getInstance().format(this.statCountOps)+", read="+NumberFormat.getInstance().format(this.statCountMemoryRead)+", write="+NumberFormat.getInstance().format(statCountMemoryWrite));
+        System.out.println(">" + this.result + "<");
+        System.out.print("pc=" + this.pc + " (max=" + this.programSize + "), dc=" + this.pointer + " (" + this.memorySize + "), ");
+        System.out.print("pc-ops=" + NumberFormat.getInstance().format(this.statCountOps) + ", read=" + NumberFormat.getInstance().format(this.statCountMemoryRead) + ", write=" + NumberFormat.getInstance().format(statCountMemoryWrite));
         System.out.println();
         if (Brainf_ck.verbose2()) {
             var logPointer = this.mod(this.pointer - 4, this.memorySize);
@@ -398,7 +501,7 @@ public class Brain {
             var debugLine4 = new StringBuilder().append("         ");
             while (logPointer != logPointerMax) {
                 debugLine1.append(String.format("%7d", this.memory[logPointer])).append("  ");
-                debugLine2.append(String.format("%7d", logPointer)).append(" ").append(logPointer == this.pointer ? '^': ' ');
+                debugLine2.append(String.format("%7d", logPointer)).append(" ").append(logPointer == this.pointer ? '^' : ' ');
                 debugLine3.append(logPc >= 0 && logPc < this.programSize ? this.programChar(logPc) : " ");
                 debugLine4.append(logPc == this.pc ? '^' : ' ');
                 logPointer = this.mod(++logPointer, this.memorySize);
@@ -418,7 +521,7 @@ public class Brain {
     public void logSummary() {
         var time = System.currentTimeMillis() - this.startTime;
         if (this.result.length() > 0) System.out.println(result);
-        System.out.println("#Time="+NumberFormat.getInstance().format(time)+"ms, #ops=" + NumberFormat.getInstance().format(this.statCountOps)+", memory read="+NumberFormat.getInstance().format(this.statCountMemoryRead)+", memory writes="+NumberFormat.getInstance().format(this.statCountMemoryWrite));
+        System.out.println("#Time=" + NumberFormat.getInstance().format(time) + "ms, #ops=" + NumberFormat.getInstance().format(this.statCountOps) + ", memory read=" + NumberFormat.getInstance().format(this.statCountMemoryRead) + ", memory writes=" + NumberFormat.getInstance().format(this.statCountMemoryWrite));
     }
 
 }

@@ -92,6 +92,9 @@ public class ByteCode {
     }
 
     public byte next() {
+        return this.pc != this.byteCode.length ? this.read(this.pc++) : 0;
+    }
+    public byte nextNoIndexCheck() {
         return this.read(this.pc++);
     }
 
@@ -119,7 +122,7 @@ public class ByteCode {
         var b1 = this.byteCode[index++];
         var b2 = this.byteCode[index++];
         var b3 = this.byteCode[index];
-        if (b0 == 0x00 && b1 ==  0x00 && b2 ==  0x00) return b3 & 0xFF;
+        if (b2 == 0x00 && b1 ==  0x00 && b0 ==  0x00) return b3 & 0xFF;
         return ((b0 & 0xFF) << 24) | // Most significant byte
                 ((b1 & 0xFF) << 16) | // Second byte
                 ((b2 & 0xFF) << 8) | // Third byte
@@ -168,7 +171,7 @@ public class ByteCode {
         this.push(Brain.BYTECODE_END_LOOP);
         var lastBracketPos = bracketsBytePos.pop();
         var distance = endBracketPos - lastBracketPos;
-        this.pushInt(distance);
+        this.pushInt(distance+5);
         this.writeInt(lastBracketPos + 1, distance);
     }
 
@@ -186,7 +189,11 @@ public class ByteCode {
     }
 
     public boolean hasNext() {
-        return this.pc < this.length();
+        return this.pc != this.length();
+    }
+
+    public void moveBack(int i) {
+        this.pc -= i;
     }
 
     public void move(int i) {

@@ -148,6 +148,47 @@ numwarp.p - showing some numbers warped on screen - https://brainfuck.org/numwar
 
 some more examples: https://brainfuck.org/
 
+# Performance
+
+On a MacBook Pro 2019, intel p7
+
+- interpreter:
+  - all is fully interpreted - no optimizeations: 69s
+
+```bash
+./brainf_ck.sh mandelbrot.bf -i
+```
+
+- compile, optimized bytecode and execute
+    - overflow check + print every char: 13.9s
+```bash
+./brainf_ck.sh mandelbrot.bf -o -b 1
+```
+
+    - overflow check + print every 1000 char: 13.4s
+```bash
+./brainf_ck.sh mandelbrot.bf -o -b 1000
+```
+
+    - print every 1000 char: 12.048s
+```bash
+./brainf_ck.sh mandelbrot.bf -b 1000
+```
+
+    - print at the end: 11.8s
+```bash
+./brainf_ck.sh mandelbrot.bf -b 1000000
+```
+
+## Details
+
+Mandelbrot's calculation summary
+ - #ops=3’648’944’374  !!!!!!!!!!!!
+ - memory read=1’908’476’913
+ - memory writes=384’853’293
+
+
+
 # Build
 
 checkout
