@@ -9,14 +9,11 @@ import brainf_ck.Brainf_ckCommandline;
 import brainf_ck.ByteCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -47,6 +44,7 @@ class Brainf_ckTest {
         BYTE_STRING_CODE_MAPPING.put("[-]>[-]>", Brain.BYTECODE_SET_TO_0_AND_MOVE_MULTI);
     }
     private Reader reader;
+    private InputStream originalIn;
 
     Reader ReadReader(String testfile) throws FileNotFoundException, URISyntaxException {
         URL resource = Brainf_ckTest.class.getResource("tests/"+testfile);
@@ -348,6 +346,59 @@ class Brainf_ckTest {
 
         // Action
         new Brainf_ckCommandline().run(bf);
+    }
+
+    @Test void compile_fromMissingLBracket_exception() throws IOException {
+        // Arrange
+        var code = "+++++[>+++++++>++<<-]>.>.[";
+
+        // Act
+        Assertions.assertThrows(IllegalArgumentException.class,() -> {
+                new Brain(code).interpretUsingVM();
+        });
+    }
+
+    @Test void compile_fromMissingRBracket_exception() throws IOException {
+        // Arrange
+        var code = "+++++[>+++++++>++<<-]>.>.][";
+
+        // Act
+        Assertions.assertThrows(IllegalArgumentException.class,() -> {
+            new Brain(code).interpretUsingVM();
+        });
+    }
+
+    @BeforeEach
+    void setUpSystemIn() {
+        // Save the original System.in
+        originalIn = System.in;
+    }
+    @AfterEach
+    void tearDownSystemIn() {
+        // Restore the original System.in
+        System.setIn(originalIn);
+    }
+
+    @Test void compile_rot13_ok() throws URISyntaxException, IOException {
+        // Arrange
+        var bf = ReadReader("rot13.bf");
+
+        // Simulate user input as a single character 'A'
+        String input = "~mlk zyx";
+        byte[] inputBytes = input.getBytes();
+        byte[] extendedBytes = new byte[inputBytes.length + 1];
+
+        // Copy input bytes and append 0 at the end
+        System.arraycopy(inputBytes, 0, extendedBytes, 0, inputBytes.length);
+        extendedBytes[extendedBytes.length - 1] = 0;
+        var in = new ByteArrayInputStream(extendedBytes);
+        System.setIn(in);
+
+        // Action
+        Brainf_ck._interpret=false;
+        Brainf_ck._bufferSize=1;
+        new Brainf_ckCommandline().run(bf);
+
     }
 
 }

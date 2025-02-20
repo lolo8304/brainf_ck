@@ -169,6 +169,9 @@ public class ByteCode {
         resetLast();
         var endBracketPos = this.pc;
         this.push(Brain.BYTECODE_END_LOOP);
+        if (bracketsBytePos.empty()) {
+            throw new IllegalArgumentException("unmatched ]");
+        }
         var lastBracketPos = bracketsBytePos.pop();
         var distance = endBracketPos - lastBracketPos;
         this.pushInt(distance+5);
@@ -180,6 +183,9 @@ public class ByteCode {
     }
 
     public void finish() {
+        if (!this.bracketsBytePos.empty()) {
+            throw new IllegalArgumentException("unmatched [");
+        }
         this.byteCode = Arrays.copyOf(this.byteCode, this.pc);
         this.reset();
     }
